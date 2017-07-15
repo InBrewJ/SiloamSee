@@ -9,3 +9,5 @@ Built by root user of a fresh install of Ubuntu Xenial 16.04 LTS.
 Obviously this is not ideal.
 
 This will be changed in the future when the final code is merged with the "Siloam" repo
+
+https://github.com/InBrewJ/Siloam
