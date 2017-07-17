@@ -84,7 +84,7 @@
         android:id="@+id/pause_button"
         android:layout_width="100dp"
         android:layout_height="wrap_content"
-		android:layout_marginRight="5dp"
+	android:layout_marginRight="5dp"
         android:layout_alignParentTop="true"
         android:layout_marginTop="10dp"
         android:layout_alignParentRight="true"
@@ -116,6 +116,68 @@
         android:layout_above="@+id/camera_button"
         android:layout_centerHorizontal="true"
         android:text="@string/close_visualization" />
+
+   
+
+    <Button
+        android:id="@+id/start_gps_button"
+        android:layout_width="120dp"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="5dp"
+	android:layout_marginBottom="15dp"
+	android:layout_alignParentRight="true"
+	android:layout_above="@+id/stop_gps_button"
+        android:onClick="startUpdatesButtonHandler"
+        android:text="@string/start_gps" />
+
+    <Button
+        android:id="@+id/stop_gps_button"
+        android:layout_width="120dp"
+        android:layout_height="wrap_content"
+	android:layout_above="@+id/backface_button"
+        android:layout_marginRight="5dp"
+        android:layout_marginBottom="15dp"
+	android:layout_alignParentRight="true"
+        android:enabled="false"
+        android:onClick="stopUpdatesButtonHandler"
+        android:text="@string/stop_gps" />
+    
+
+    <TextView
+        android:id="@+id/latitude_text"
+        android:layout_width="wrap_content"
+        android:layout_height="20dp"
+        android:layout_marginLeft="@dimen/small_margin"
+        android:layout_marginStart="@dimen/small_margin"
+        android:textSize="@dimen/default_text_size" />
+
+    <TextView
+        android:id="@+id/longitude_text"
+        android:layout_width="wrap_content"
+        android:layout_height="20dp"
+	android:layout_below="@+id/latitude_text"	
+	android:layout_marginTop="3dp"
+        android:layout_marginLeft="@dimen/small_margin"
+        android:layout_marginStart="@dimen/small_margin"
+        android:textSize="@dimen/default_text_size" />
+
+    <TextView
+        android:id="@+id/last_update_time_text"
+        android:layout_width="wrap_content"
+        android:layout_height="20dp"
+	android:layout_below="@+id/longitude_text"
+	android:layout_marginTop="3dp"
+        android:layout_marginLeft="@dimen/small_margin"
+        android:layout_marginStart="@dimen/small_margin"
+        android:textSize="@dimen/default_text_size" />
+
+    <TextView
+        android:id="@+id/location_inadequate_warning"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/location_settings_inadequate_warning"
+        android:visibility="invisible" />
+    
 
     <SeekBar
         android:id="@+id/seekBar_fov"

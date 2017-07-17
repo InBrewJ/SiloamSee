@@ -31,7 +31,7 @@
     <!-- Add the provision for google play services and therefore the fused location provider   -->
 
     <meta-data android:name="com.google.android.gms.version"
-            android:value="11000000" />
+            android:value="@integer/google_play_services_version" />
     
     <uses-library android:name="com.projecttango.libtango_device2" android:required="true" />
 

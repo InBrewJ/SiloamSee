@@ -798,4 +798,24 @@
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
 
+    <!-- Strings related to location services  -->
+
+    <string name="latitude_label">Latitude</string>
+    <string name="longitude_label">Longitude</string>
+    <string name="last_update_time_label">Last location update time</string>
+
+    <string name="start_gps">Start GPS</string>
+    <string name="stop_gps">Stop GPS</string>
+
+    <string name="location_settings_inadequate_warning">The location settings on the device are not
+        adequate to run this sample. Fix in Settings.</string>
+
+    <string name="permission_rationale">Location permission is needed for core functionality</string>
+    <string name="permission_denied_explanation">Permission was denied, but is needed for core
+    functionality.</string>
+
+    <!-- The first major error lies here, this results in a
+         FATAL EXCEPTION                                      -->
+    <integer name="google_play_services_version">11011000</integer>
+
 </resources>
