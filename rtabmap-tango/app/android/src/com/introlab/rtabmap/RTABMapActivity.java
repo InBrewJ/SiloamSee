@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FilenameFilter;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -665,6 +666,12 @@ public class RTABMapActivity extends Activity implements OnClickListener, OnItem
         createLocationCallback();
         createLocationRequest();
         buildLocationSettingsRequest();
+
+	// Start the GPS updates as soon as we launch the activity
+	mRequestingLocationUpdates = true;
+	setButtonsEnabledState();
+	startLocationUpdates();
+	
 	Log.v(TAG, "Location methods called in onCreate()!");
                 
        	DISABLE_LOG =  !( 0 != ( getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE ) );
@@ -1322,6 +1329,10 @@ public class RTABMapActivity extends Activity implements OnClickListener, OnItem
 	
 	switch (v.getId()) {
 	case R.id.pause_button:
+	    // Before we do anything (exporting etc), stop the GPS from updating so we don't
+	    // encounter any odd asynchronous issues. We still start them again
+	    // later, or when the app is restarted
+	    stopLocationUpdates();
 	    pauseMapping();
 	    break;
 	case R.id.light_button:
@@ -2834,6 +2845,14 @@ public class RTABMapActivity extends Activity implements OnClickListener, OnItem
 	alertToShow.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
 	alertToShow.show();
     }
+
+    /*
+     * Need to create a method here that creates a .dat file with the lask known GPS coordinates
+     * and the magnetometer data here...
+     *
+     *
+     *
+     */
     
     /*
      * writeExportedFiles(final String fileName)
@@ -2843,8 +2862,6 @@ public class RTABMapActivity extends Activity implements OnClickListener, OnItem
      * micro sdxc card. This could be problematic for the future,
      * depends how many databases/OBJs a single Siloam mapping run takes
      * 
-     * Also why are tab widths 8. Who does that. Mathieu et al. do that's
-     * who
      *
      * "fileName" is carried over from saveOnDevice() above. 
      *
@@ -2889,11 +2906,37 @@ public class RTABMapActivity extends Activity implements OnClickListener, OnItem
 			    fileNames = Util.loadFileList(mWorkingDirectory + RTABMAP_TMP_DIR, false);
 			    if(fileNames.length > 0)
 				{
-				    String[] filesToZip = new String[fileNames.length];
+
+				    // We create the .dat file here, and then add it to the filesToZip
+
+				    
+
+				    try {
+
+					File datFile = new File(mWorkingDirectory + RTABMAP_TMP_DIR + "/", "gpsAndHeading.dat");
+					FileWriter writer = new FileWriter(datFile);
+
+					// Last known GPS point is stored in lat/long format
+
+					writer.append(mCurrentLocation.getLatitude() + ", " + mCurrentLocation.getLongitude());
+					writer.append("\nAnd who knows what the magnetometer data will look like...");
+					writer.flush();
+					writer.close();
+				    } catch (IOException e) {
+					Log.e(TAG, "Something went very wrong trying to write the .dat file");
+				    }
+
+				    // fileNames.length + 1 here because we want to write
+				    // a .dat file with the GPS coordinates and the magnetometer
+				    // data
+				    
+				    String[] filesToZip = new String[fileNames.length + 1];
 				    for(int i=0; i<fileNames.length; ++i)
 					{
 					    filesToZip[i] = mWorkingDirectory + RTABMAP_TMP_DIR + "/" + fileNames[i];
 					}
+
+				    filesToZip[fileNames.length] = mWorkingDirectory + RTABMAP_TMP_DIR + "/" + "gpsAndHeading.dat";
 			
 				    File toZIPFile = new File(zipOutput);
 				    toZIPFile.delete();			
