@@ -154,13 +154,23 @@ import java.text.DateFormat;
 import java.util.Date;
 import java.util.Locale;
 
+// For heading (magnetometer) services
+
+import android.app.Activity;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
+import android.os.Bundle;
+import android.util.Log;
+
 // For Tango
 
 import com.google.atap.tangoservice.Tango;
 
 // The main activity of the application. This activity shows debug information
 // and a glSurfaceView that renders graphic content.
-public class RTABMapActivity extends Activity implements OnClickListener, OnItemSelectedListener {
+public class RTABMapActivity extends Activity implements OnClickListener, OnItemSelectedListener, SensorEventListener {
 
     // Tag for debug logging.
     public static final String TAG = RTABMapActivity.class.getSimpleName();
@@ -344,7 +354,7 @@ public class RTABMapActivity extends Activity implements OnClickListener, OnItem
      */
     private Location mCurrentLocation;
 
-    // UI Widgets.
+    // Location and Heading UI Widgets.
     private Button mStartUpdatesButton;
     private Button mStopUpdatesButton;
     private TextView mLastUpdateTimeTextView;
@@ -367,9 +377,15 @@ public class RTABMapActivity extends Activity implements OnClickListener, OnItem
      */
     private String mLastUpdateTime;
 
-    // Location related functions
+    // For heading (magnetometer) sensor interface
 
-    // insert here...
+    private SensorManager mSensorManager;
+    Sensor accelerometer;
+    Sensor magnetometer;
+
+    private Button mGetHeadingButton;
+    private TextView mHeadingTextView;
+    private String mHeadingLabel;
 
     //Tango Service connection.
     ServiceConnection mTangoServiceConnection = new ServiceConnection() {
@@ -448,7 +464,7 @@ public class RTABMapActivity extends Activity implements OnClickListener, OnItem
 	mButtonShareOnSketchfab.setVisibility(View.INVISIBLE);
 
 	// Buttons for GPS logging etc
-		// Location services widgets, labels, bundle storage and callbacks
+	// Location services widgets, labels, bundle storage and callbacks
 
 	// Locate the UI widgets.
         mStartUpdatesButton = (Button) findViewById(R.id.start_gps_button);
@@ -671,10 +687,43 @@ public class RTABMapActivity extends Activity implements OnClickListener, OnItem
 	mRequestingLocationUpdates = true;
 	setButtonsEnabledState();
 	startLocationUpdates();
+
+	// Set up the heading (magnetometer/accelerometer) sensor array
+	mSensorManager = (SensorManager)getSystemService(SENSOR_SERVICE);
+        accelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        magnetometer = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
 	
 	Log.v(TAG, "Location methods called in onCreate()!");
                 
        	DISABLE_LOG =  !( 0 != ( getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE ) );
+    }
+
+    // Heading (magnetometer) related functions
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {  }
+
+    float[] mGravity;
+    float[] mGeomagnetic;
+
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER)
+            mGravity = event.values;
+        if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD)
+            mGeomagnetic = event.values;
+        if (mGravity != null && mGeomagnetic != null) {
+            float R[] = new float[9];
+            float I[] = new float[9];
+            boolean success = SensorManager.getRotationMatrix(R, I, mGravity, mGeomagnetic);
+            if (success) {
+                float orientation[] = new float[3];
+                SensorManager.getOrientation(R, orientation);
+                float azimuth = orientation[0]; // orientation contains: azimuth, pitch and roll
+
+                Log.v("onSensorChanged", "Azimuth = " + azimuth);
+            }
+        }
     }
 
     // Location related functions (adapted from LocationUpdates-app in the Android Studio samples repo)
@@ -1109,6 +1158,9 @@ public class RTABMapActivity extends Activity implements OnClickListener, OnItem
 
 	// Remove location updates to save battery.
         stopLocationUpdates();
+
+	// Unregister the magnetometer listener
+	mSensorManager.unregisterListener(this);
 	
 	stopDisconnectTimer();
 		
@@ -1144,13 +1196,17 @@ public class RTABMapActivity extends Activity implements OnClickListener, OnItem
         }
 
         updateGPSUI();
+
+	// Re-register the accelerometer and the magnetometer
+	mSensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_UI);
+        mSensorManager.registerListener(this, magnetometer, SensorManager.SENSOR_DELAY_UI);     
 		
 	mProgressDialog.setTitle("");
 	if(mOnPause)
 	    {
 		if(System.currentTimeMillis()/1000 - mOnPauseStamp < 1)
 		    {
-			mProgressDialog.setMessage(String.format("RTAB-Map has been interrupted by another application, Tango should be re-initialized! Set your phone/tablet in Airplane mode if this happens often."));
+			mProgressDialog.setMessage(String.format("SiloamSee has been interrupted by another application, Tango should be re-initialized! Set your phone/tablet in Airplane mode if this happens often."));
 		    }
 		else
 		    {
