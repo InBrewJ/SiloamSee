@@ -806,6 +806,7 @@
 
     <string name="start_gps">Start GPS</string>
     <string name="stop_gps">Stop GPS</string>
+    <string name="get_heading">Get Heading</string>
 
     <string name="location_settings_inadequate_warning">The location settings on the device are not
         adequate to run this sample. Fix in Settings.</string>

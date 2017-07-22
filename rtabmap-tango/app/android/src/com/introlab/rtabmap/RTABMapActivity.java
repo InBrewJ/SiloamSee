@@ -122,7 +122,6 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -161,8 +160,6 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.os.Bundle;
-import android.util.Log;
 
 // For Tango
 
@@ -703,8 +700,10 @@ public class RTABMapActivity extends Activity implements OnClickListener, OnItem
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {  }
 
-    float[] mGravity;
-    float[] mGeomagnetic;
+    private float[] mGravity;
+    private float[] mGeomagnetic;
+    private float azimuth;
+    private int headingsTaken = 0;
 
     @Override
     public void onSensorChanged(SensorEvent event) {
@@ -719,9 +718,18 @@ public class RTABMapActivity extends Activity implements OnClickListener, OnItem
             if (success) {
                 float orientation[] = new float[3];
                 SensorManager.getOrientation(R, orientation);
-                float azimuth = orientation[0]; // orientation contains: azimuth, pitch and roll
-
-                Log.v("onSensorChanged", "Azimuth = " + azimuth);
+                azimuth = orientation[0]; // orientation contains: azimuth, pitch and roll
+		
+		if (getHeadingButtonPressed && headingsTaken < NUM_HEADING_READINGS) {
+		    totalHeading += azimuth;
+		    headingsTaken++;
+		    Log.v("onSensorChanged", "Azimuth = " + azimuth);
+		} else if (headingsTaken >= NUM_HEADING_READINGS) {
+		    lastAverageHeading= totalHeading / NUM_HEADING_READINGS;
+		    getHeadingButtonPressed = false;
+		    headingsTaken = 0;
+		    Log.v(TAG, "lastAverageHeading = " + lastAverageHeading);
+		}
             }
         }
     }
@@ -1373,6 +1381,26 @@ public class RTABMapActivity extends Activity implements OnClickListener, OnItem
         // stopped state. Doing so helps battery performance and is especially
         // recommended in applications that request frequent location updates.
         stopLocationUpdates();
+    }
+
+    /**
+     * Handles the Get Heading button. Takes the last twenty readings of the azimuth 
+     * value and averages them before ceasing to update
+     */
+
+    private float lastAverageHeading;
+    private float totalHeading = 0;
+    private boolean getHeadingButtonPressed = false;
+    private static final int NUM_HEADING_READINGS = 20;
+
+    public void getHeadingButtonHandler(View view) {
+
+	// Zero totalHeading and lastAverageHeading so we can take
+	// fresh readings in onSensorChanged()
+	getHeadingButtonPressed = true;
+	totalHeading= 0;
+	lastAverageHeading = 0;
+
     }
 
     @Override
@@ -2972,10 +3000,13 @@ public class RTABMapActivity extends Activity implements OnClickListener, OnItem
 					File datFile = new File(mWorkingDirectory + RTABMAP_TMP_DIR + "/", "gpsAndHeading.dat");
 					FileWriter writer = new FileWriter(datFile);
 
-					// Last known GPS point is stored in lat/long format
+					// Last known GPS point is stored in "lat long" format
+					// Average of the last NUM_HEADING_READINGS is saved after a new line
+					// This will be the heading of the direction of the arrow of the
+					// heading widget
 
-					writer.append(mCurrentLocation.getLatitude() + ", " + mCurrentLocation.getLongitude());
-					writer.append("\nAnd who knows what the magnetometer data will look like...");
+					writer.append(mCurrentLocation.getLatitude() + " " + mCurrentLocation.getLongitude());
+					writer.append("\n" + lastAverageHeading);
 					writer.flush();
 					writer.close();
 				    } catch (IOException e) {
