@@ -17,3 +17,6 @@ AndroidStudioProjects/
 .profile
 .wget-hsts
 tools/
+*~
+*#
+test.log
